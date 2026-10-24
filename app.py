@@ -69,11 +69,50 @@ def index():
     return apology("Rol not found", 403)
 
 
-@app.route("/buy", methods=["GET", "POST"])
+# ==========================================
+# Administration users management
+# ==========================================
+@app.route("/admin/users", methods=["GET", "POST"])
 @login_required
-def buy():
+@role_required("admin")
+def manage_users():
     """Buy shares of stock"""
-    return apology("TODO")
+    if request.method == "POST":
+        # Get form data
+        full_name = request.form.get("full_name", "").strip()
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "").strip()
+        role = request.form.get("role", "").strip()
+        specialty = request.form.get("specialty", "").strip() if role == "doctor" else None
+
+        # Validate form data
+        if not all([full_name, username, password, role]):
+            return apology("All fields are required", 400)
+
+        # Check if username already exists
+        existing_user = db.execute("SELECT * FROM users WHERE username = ?", username)
+        if existing_user:
+            return apology("Username already exists", 400)
+
+        if specialty and not all([full_name, username, password, role, specialty]):
+            return apology("All fields are required", 400)
+
+        # Hash the password
+        hashed_password = generate_password_hash(password)
+
+        # Insert new user into the database
+        db.execute(
+            "INSERT INTO users (full_name, username, hash, role, specialty) VALUES (?, ?, ?, ?, ?)",
+            full_name,
+            username,
+            hashed_password,
+            role,
+            specialty,
+        )
+        flash(f"Usuario {full_name} creado exitosamente.", "success")
+        return redirect("/admin/users")
+    users_list = db.execute("SELECT id, full_name, username, role, specialty FROM users")
+    return render_template("admin_users.html", users=users_list)
 
 
 @app.route("/history")
