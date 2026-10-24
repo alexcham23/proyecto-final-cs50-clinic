@@ -1,6 +1,6 @@
 import requests
 
-from flask import current_app, redirect, render_template, session
+from flask import g, redirect, render_template, session
 from functools import wraps
 
 
@@ -58,13 +58,8 @@ def role_required(*allowed_roles):
             if session.get("user_id") is None:
                 return redirect("/login")
 
-            user = current_app.extensions["db"].execute(
-                "SELECT role FROM users WHERE id = ?",
-                session["user_id"],
-            )
-            
             # Check if the user exists and has a role
-            if not user or user[0]["role"] not in allowed_roles:
+            if g.user is None or g.user["role"] not in allowed_roles:
                 return apology("Access denied: insufficient permissions", 403)
             return f(*args, **kwargs)
 

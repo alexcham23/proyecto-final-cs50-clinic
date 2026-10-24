@@ -1,11 +1,11 @@
 import os
 
 from cs50 import SQL
-from flask import Flask, flash, redirect, render_template, request, session
+from flask import Flask, flash, g, redirect, render_template, request, session
 from flask_session import Session
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from helpers import apology, login_required
+from helpers import apology, login_required, role_required
 
 # Configure application
 app = Flask(__name__)
@@ -23,6 +23,20 @@ db = SQL("sqlite:///clinicMedic.db")
 app.extensions["db"] = db
 
 
+@app.before_request
+def load_current_user():
+    """Load the current user from the database for this request."""
+    g.user = None
+
+    if session.get("user_id") is not None:
+        rows = db.execute(
+            "SELECT id, full_name, role FROM users WHERE id = ?",
+            session["user_id"],
+        )
+        if rows:
+            g.user = rows[0]
+
+
 @app.after_request
 def after_request(response):
     """Ensure responses aren't cached"""
@@ -35,8 +49,24 @@ def after_request(response):
 @app.route("/")
 @login_required
 def index():
-    """Show portfolio of stocks"""
-    return apology("TODO")
+    """Show the dashboard for the current user's role."""
+    dashboards = {
+        "admin": "admin_dashboard.html",
+        "receptionist": "receptionist_dashboard.html",
+        "doctor": "doctor_dashboard.html",
+    }
+
+    template = dashboards.get(g.user["role"])
+    if template is None:
+        return apology("invalid user role", 403)
+
+    if g.user["role"] == "admin":
+        # Fetch all users for the admin dashboard
+        total_patients = db.execute("SELECT COUNT(*) AS total FROM patients")[0]["total"]
+        total_doctors = db.execute("SELECT COUNT(*) AS total FROM users WHERE role = 'doctor'")[0]["total"]
+        total_appointments = db.execute("SELECT COUNT(*) AS total FROM appointments")[0]["total"]
+        return render_template(template, patients=total_patients, doctors=total_doctors, appointments=total_appointments)
+    return apology("Rol not found", 403)
 
 
 @app.route("/buy", methods=["GET", "POST"])

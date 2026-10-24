@@ -30,24 +30,24 @@
                 </button>
                 <div class="collapse navbar-collapse" id="navbar">
                     {% if session["user_id"] %}
-                        <ul class="navbar-nav me-auto mt-2">
+                        <ul class="navbar-nav mx-auto mt-2">
                             <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
                             {# Menu receptions and admin #}
-                            {# if session["user_role"] in ["receptionist", "admin"] #}
+                            {% if g.user["role"] in ["receptionist", "admin"] %}
                                 <li class="nav-item"><a class="nav-link" href="/patients/new">New Patient</a></li>
                                 <li class="nav-item"><a class="nav-link" href="/appointments/new">Schedule Appointment</a></li>
-                            {# endif #}
+                            {% endif %}
                             {# Menu admin #}
-                            {# if session["user_role"] == "admin" #}
+                            {% if g.user["role"] == "admin" %}
                                 <li class="nav-item"><a class="nav-link" href="/admin/users">Manage Users</a></li>
-                            {# endif #}
+                            {% endif %}
                         </ul>
-                        <ul class="navbar-nav ms-auto mt-2">
+                        <ul class="navbar-nav ms-auto mt-2 align-items-center">
                             <li class="nav-item me-3 text-white">
-                               <span class="badge bg-light text-primary text-uppercase">{{ session['user_role'] }}</span>
-                               <span class="fw-semibold ms-1">{{ session['full_name'] }}</span>
+                               <span class="badge bg-light text-primary text-uppercase">{{ g.user['role'] }}</span>
+                               <span class="fw-semibold ms-1 text-secondary">{{ g.user['full_name'] }}</span>
                             </li>
-                            <li class="nav-item"><a class="nav-link" href="/logout">Log Out</a></li>
+                            <li class="nav-item"><a class="btn btn-outline-danger btn-sm" href="/logout">Log Out</a></li>
                         </ul>
                     {% else %}
                         <ul class="navbar-nav ms-auto mt-2">
@@ -87,7 +87,7 @@
                 <input alt="Validate" src="/static/I_heart_validator.png" type="image"> <!-- https://validator.w3.org/ -->
             </form>
             <div class="text-center bg-white  border-top py-3 text-muted small mt-auto">
-                Proyecto Final CS50 &middot; Sistema Citas Medicas
+                Proyecto Final CS50 &middot; Sistema Citas 
             </div>
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
