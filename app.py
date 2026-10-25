@@ -66,6 +66,21 @@ def index():
         total_doctors = db.execute("SELECT COUNT(*) AS total FROM users WHERE role = 'doctor'")[0]["total"]
         total_appointments = db.execute("SELECT COUNT(*) AS total FROM appointments")[0]["total"]
         return render_template(template, patients=total_patients, doctors=total_doctors, appointments=total_appointments)
+    elif g.user["role"] == "receptionist":
+        # Fetch today's appointments for the receptionist dashboard
+        today_appointments = db.execute(
+            """
+            SELECT a.id, p.first_name || ' ' || p.last_name AS patient_name, 
+                d.full_name AS doctor_name, d.specialty, 
+                a.scheduled_date 
+            FROM appointments a 
+            JOIN patients p ON a.patient_id = p.id 
+            JOIN users d ON a.doctor_id = d.id 
+            WHERE DATE(a.scheduled_date) = DATE('now')
+            ORDER BY a.scheduled_date ASC
+            """
+        )
+        return render_template(template, appointments=today_appointments)
     return apology("Rol not found", 403)
 
 
@@ -94,7 +109,7 @@ def manage_users():
         if existing_user:
             return apology("Username already exists", 400)
 
-        if specialty and not all([full_name, username, password, role, specialty]):
+        if role == "doctor" and not specialty:
             return apology("All fields are required", 400)
 
         # Hash the password
@@ -115,11 +130,16 @@ def manage_users():
     return render_template("admin_users.html", users=users_list)
 
 
-@app.route("/history")
+# ==========================================
+# Receptionist management
+# ==========================================
+
+@app.route("/patients/new", methods=["GET", "POST"])
 @login_required
-def history():
+@role_required("receptionist", "admin")
+def new_patient():
     """Show history of transactions"""
-    return apology("TODO")
+    return render_template("new_patient.html")
 
 
 @app.route("/login", methods=["GET", "POST"])
