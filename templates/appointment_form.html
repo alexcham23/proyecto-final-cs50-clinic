@@ -1,0 +1,77 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Schedule Appointment
+{% endblock %}
+
+{% block main %}
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+            <div class="card shadow-sm border-0 p-4">
+                <div class="card-body p-4">
+                    <h4 class="card-title mb-4 fw-bold text-uppercase">Schedule an appointment</h4>
+                    <form action="/appointments/new" method="post">
+                        <!-- Add your form fields here -->
+                        <div class="mb-3 text-start">
+                            <label  class="form-label" for="patient_id">Patient:</label>
+                            <select class="form-select" name="patient_id" id="patient_id" required>
+                                <option value="" disabled selected>Select a patient</option>
+                                {% for patient in patients %}
+                                    <option value="{{ patient.id }}">{{ patient.first_name }} {{ patient.name }}</option>
+                                {% endfor %}
+                                <!-- Add options for each patient -->
+                            </select>
+                        </div>
+                        <div class="mb-3 text-start">
+                            <label class="form-label" for="doctor_id">Doctor:</label>
+                            <select class="form-select" name="doctor_id" id="doctor_id" required>
+                                <option value="" disabled selected>Select a doctor</option>
+                                {% for doctor in doctors %}
+                                    <option value="{{ doctor.id }}">Dr. {{ doctor.full_name }} ({{ doctor.specialty }})</option>
+                                {% endfor %}
+                                <!-- Add options for each doctor -->
+                            </select>
+                        </div>
+                        <div class="row ">
+                            <div class="col-md-6 mb-3 text-start">
+                                <label class="form-label" for="date">Date:</label>
+                                <input type="date" class="form-control" name="date" id="date" required>
+                            </div>
+                            <div class="col-md-6 mb-3 text-start">
+                                <label class="form-label" for="time">Time:</label>
+                                <input type="time" class="form-control" name="time" id="time" min="09:00" max="16:00" required>
+                                <div class="form-text" id="schedule-help">Monday to Friday: 09:00-16:00. Saturday: 09:00-14:00.</div>
+                            </div>
+                        </div>
+                        <div class="mb-4 text-start">
+                            <label class="form-label" for="reason">	Chief complaint:</label>
+                            <textarea class="form-control" name="reason" id="reason" rows="3" limit="255" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 py-2">confirm appointment</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const dateInput = document.getElementById("date");
+        const timeInput = document.getElementById("time");
+        const scheduleHelp = document.getElementById("schedule-help");
+
+        dateInput.addEventListener("change", () => {
+            const selectedDate = new Date(`${dateInput.value}T00:00:00`);
+            const isSunday = selectedDate.getDay() === 0;
+            const isSaturday = selectedDate.getDay() === 6;
+
+            timeInput.max = isSaturday ? "14:00" : "16:00";
+            timeInput.disabled = isSunday;
+            timeInput.value = isSunday ? "" : timeInput.value;
+            timeInput.setCustomValidity(isSunday ? "Appointments are not available on Sundays." : "");
+            scheduleHelp.textContent = isSunday
+                ? "The clinic is closed on Sundays."
+                : isSaturday
+                    ? "Saturday: 09:00-14:00."
+                    : "Monday to Friday: 09:00-16:00.";
+        });
+    </script>
+{% endblock %}

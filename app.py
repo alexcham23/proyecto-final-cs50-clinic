@@ -1,4 +1,6 @@
 import os
+import re
+from datetime import datetime
 
 from cs50 import SQL
 from flask import Flask, flash, g, redirect, render_template, request, session
@@ -70,16 +72,16 @@ def index():
         # Fetch today's appointments for the receptionist dashboard
         today_appointments = db.execute(
             """
-            SELECT a.id, p.first_name || ' ' || p.last_name AS patient_name, 
-                d.full_name AS doctor_name, d.specialty, 
-                a.scheduled_date 
+            SELECT a.id, a.scheduled_date, a.scheduled_time, a.status,
+            p.first_name || ' ' || p.last_name AS patient_name,
+            d.full_name AS doctor_name, d.specialty
             FROM appointments a 
             JOIN patients p ON a.patient_id = p.id 
             JOIN users d ON a.doctor_id = d.id 
-            WHERE DATE(a.scheduled_date) = DATE('now')
             ORDER BY a.scheduled_date ASC
             """
         )
+        print(today_appointments)
         return render_template(template, appointments=today_appointments)
     return apology("Rol not found", 403)
 
@@ -139,8 +141,87 @@ def manage_users():
 @role_required("receptionist", "admin")
 def new_patient():
     """Show history of transactions"""
-    return render_template("new_patient.html")
+    if request.method == "POST":
+        # Get form data
+        first_name = request.form.get("first_name", "").strip()
+        last_name = request.form.get("last_name", "").strip()
+        phone = request.form.get("phone", "").strip()
+        email = request.form.get("email", "").strip()
 
+        # Validate form data
+        if not all([first_name, last_name, phone]):
+            return apology("All fields are required", 400)
+        if not phone.isdigit() or len(phone) < 7:
+            return apology("Invalid contact number", 400)
+        if email and not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
+            return apology("Invalid email address", 400)
+
+        # Insert new patient into the database
+        db.execute(
+            "INSERT INTO patients (first_name, last_name, phone, email) VALUES (?, ?, ?, ?)",
+            first_name,
+            last_name,
+            phone,
+            email,
+        )
+        flash(f"Paciente {first_name} {last_name} creado exitosamente.", "success")
+        return redirect("/appointments/new")
+    return render_template("patient_form.html")
+
+@app.route("/appointments/new", methods=["GET", "POST"])
+@login_required
+@role_required("receptionist", "admin")
+def new_appointment():
+    """appointment form"""
+    if request.method == "POST":
+        # Get form data
+        patient_id = request.form.get("patient_id", "")
+        doctor_id = request.form.get("doctor_id", "")
+        date = request.form.get("date", "")
+        time = request.form.get("time", "")
+        reason = request.form.get("reason", "").strip()
+
+        # Validate form data
+        if not all([patient_id, doctor_id, date, time, reason]):
+            return apology("All fields are required", 400)
+
+        try:
+            appointment_date = datetime.strptime(date, "%Y-%m-%d").date()
+            appointment_time = datetime.strptime(time, "%H:%M").time()
+        except ValueError:
+            return apology("Invalid appointment date or time", 400)
+
+        opening_time = datetime.strptime("09:00", "%H:%M").time()
+        closing_time = datetime.strptime(
+            "14:00" if appointment_date.weekday() == 5 else "16:00", "%H:%M"
+        ).time()
+
+        if appointment_date.weekday() == 6 or not (opening_time <= appointment_time <= closing_time):
+            return apology(
+                "Appointments are available Monday to Friday from 09:00 to 16:00 "
+                "and Saturdays from 09:00 to 14:00.",
+                400,
+            )
+
+        # validate conflict with existing appointments
+        conflict = db.execute(
+            "SELECT id FROM appointments WHERE doctor_id = ? AND scheduled_date = ? AND scheduled_time = ?",
+            doctor_id, date, time
+        )
+
+        if len(conflict) > 0:
+            return apology("The doctor is already booked for this time.", 400)
+        # Insert new appointment into the database
+        db.execute(
+            "INSERT INTO appointments (patient_id, doctor_id, scheduled_date, scheduled_time, reason) VALUES (?, ?, ?, ?, ?)",
+            patient_id, doctor_id,date,time, reason
+        )
+
+        flash(f"Cita programada exitosamente.", "success")
+        return redirect("/")
+    patients = db.execute("SELECT id, first_name || ' ' || last_name AS name FROM patients ORDER BY last_name")
+    doctors = db.execute("SELECT id, full_name, specialty FROM users WHERE role = 'doctor' ORDER BY full_name")
+    return render_template("appointment_form.html" , patients=patients, doctors=doctors)
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
