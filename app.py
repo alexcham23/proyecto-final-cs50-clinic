@@ -81,7 +81,22 @@ def index():
             ORDER BY a.scheduled_date ASC
             """
         )
-        print(today_appointments)
+        return render_template(template, appointments=today_appointments)
+    elif g.user["role"] == "doctor":
+        # Fetch today's appointments for the doctor dashboard
+        today_appointments = db.execute(
+            """
+            SELECT a.id, a.scheduled_date, a.scheduled_time, a.status,
+            p.first_name || ' ' || p.last_name AS patient_name,
+            p.phone,a.reason
+            FROM appointments a 
+            JOIN patients p ON a.patient_id = p.id 
+            WHERE a.doctor_id = ? 
+            ORDER BY a.scheduled_date ASC
+            """,
+            g.user["id"],
+        )
+        print(f"Today's appointments: {today_appointments}")  # Debugging line to check the fetched appointments
         return render_template(template, appointments=today_appointments)
     return apology("Rol not found", 403)
 
@@ -223,6 +238,45 @@ def new_appointment():
     doctors = db.execute("SELECT id, full_name, specialty FROM users WHERE role = 'doctor' ORDER BY full_name")
     return render_template("appointment_form.html" , patients=patients, doctors=doctors)
 
+# ==========================================
+# Doctor management appointments
+# ==========================================
+
+@app.route("/appointments/<int:id>/attend", methods=["GET", "POST"])
+@login_required
+@role_required("doctor")
+def attend_appointment(id):     
+    appointments = db.execute(
+        """
+        SELECT a.id, a.scheduled_date, a.scheduled_time, a.status,
+        p.first_name || ' ' || p.last_name AS patient_name,
+        p.phone, a.reason
+        FROM appointments a
+        JOIN patients p ON a.patient_id = p.id
+        WHERE a.id = ? AND a.doctor_id = ?
+        """,
+        id,
+        g.user["id"],
+    )
+
+    if not appointments:
+        return apology("Appointment not found", 404)
+
+    if request.method == "POST":
+        notes = request.form.get("notes", "").strip()
+        status = request.form.get("status", "")
+
+        if status not in ['completed', 'cancelled']:
+            return apology("Invalid status", 400)
+
+        db.execute(
+            "UPDATE appointments SET notes = ?, status = ? WHERE id = ? AND doctor_id = ?",
+            notes, status, id, g.user["id"]
+        )
+        flash("Appointment updated successfully.", "success")
+        return redirect("/")
+    return render_template("attend_appointment.html", appointment=appointments[0])
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     """Log user in"""
@@ -277,21 +331,3 @@ def logout():
     return redirect("/")
 
 
-@app.route("/quote", methods=["GET", "POST"])
-@login_required
-def quote():
-    """Get stock quote."""
-    return apology("TODO")
-
-
-@app.route("/register", methods=["GET", "POST"])
-def register():
-    """Register user"""
-    return apology("TODO")
-
-
-@app.route("/sell", methods=["GET", "POST"])
-@login_required
-def sell():
-    """Sell shares of stock"""
-    return apology("TODO")
