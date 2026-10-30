@@ -1,0 +1,39 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Dashboard Administration
+{% endblock %}
+
+{% block main %}
+    <h2 class="h3 mb-4">Dashboard Administration</h2>
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card boder-0 bg-primary text-white shadow-sm">
+                <div class="card-body p-4">
+                    <h6 class="card-title text-uppercase mb-2 text-white-50">Total Patients</h6>
+                    <p class="display-5 fw-bold mb-0">{{ patients }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card boder-0 bg-success text-white shadow-sm">
+                <div class="card-body p-4 ">
+                    <h6 class="card-title text-uppercase mb-2 text-white-50">Active Doctors</h6>
+                    <p class="display-5 fw-bold mb-0">{{ doctors }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card boder-0 bg-info text-white shadow-sm">
+                <div class="card-body p-4 ">
+                    <h6 class="card-title text-uppercase mb-2 text-white-50">Total Appointments</h6>
+                    <p class="display-5 fw-bold mb-0">{{ appointments }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="d-flex gap-2 justify-content-center">
+        <a href="/admin/users" class="btn btn-outline-primary">Manage Users</a>        
+        <a href="/appointments/new" class="btn btn-outline-secondary">Schedule Appointment</a>
+    </div>
+{% endblock %}

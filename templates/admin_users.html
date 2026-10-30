@@ -1,0 +1,112 @@
+{% extends "layout.html" %} {% block title %} Personnel management {% endblock
+%} {% block main %}
+<div class="row g-4">
+  <div class="col-md-5">
+    <div class="card shadow-sm border-0">
+      <div class="card-body p-4">
+        <h5 class="card-title fw-bold mb-5 text-uppercase">Staff Register</h5>
+        <form action="/admin/users" method="post">
+          <div class="mb-3 text-start">
+            <label for="full_name" class="form-label">Full Name</label>
+            <input
+              class="form-control mb-3"
+              id="full_name"
+              name="full_name"
+              type="text"
+              placeholder="jose maria juarez"
+              required
+            />
+          </div>
+          <div class="mb-3 text-start">
+            <label for="username" class="form-label">Username</label>
+            <input
+              class="form-control mb-3"
+              id="username"
+              name="username"
+              type="text"
+              placeholder="josemaria"
+              required
+            />
+          </div>
+          <div class="mb-3 text-start">
+            <label for="password" class="form-label">Password</label>
+            <input
+              class="form-control mb-3"
+              id="password"
+              name="password"
+              type="password"
+              placeholder="********"
+              required
+            />
+          </div>
+          <div class="mb-3 text-start">
+            <label for="role" class="form-label">Role</label>
+            <select class="form-select mb-3" id="role" name="role" required onchange="toggleSpecialty(this.value)">
+              <option value="" selected disabled>Select a role</option>
+              <option value="admin">Admin</option>
+              <option value="doctor">Doctor</option>
+              <option value="receptionist">Receptionist</option>
+            </select>
+          </div>
+          <div class="mb-3 text-start" id="specialty-group" style="display: none">
+            <label
+              id="specialty-group"
+              for="specialty"
+              class="form-label"
+              >Medical specialty</label
+            >
+            <input
+              class="form-control"
+              id="specialty"
+              name="specialty"
+              type="text"
+              placeholder="Ej: Pediatría, Medicina General"
+            />
+          </div>
+          <button class="btn btn-primary w-100" type="submit">Register</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-7">
+    <div class="card shadow-sm border-0">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0 users-table">
+            <thead class="table-light">
+              <tr>
+                <th scope="col">#</th>
+                <th>Name</th>
+                <th>Username</th>
+                <th>Role</th>
+                <th>Specialty</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for user in users %}
+              <tr >
+                <th scope="row">{{ loop.index }}</th>
+                <td class="text-uppercase">{{ user.full_name }}</td>
+                <td>{{ user.username }}</td>
+                <td><span class="badge bg-secondary text-uppercase">{{ user.role }}</span></td>
+                <td>{{ user.specialty or 'N/A' }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+    function toggleSpecialty(role){
+        const specialtyGroup = document.getElementById("specialty-group");
+        if(role === "doctor"){
+            specialtyGroup.style.display = "block";
+        } else {
+            specialtyGroup.style.display = "none";
+        }
+    }
+</script>
+{% endblock %}

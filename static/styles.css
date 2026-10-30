@@ -21,3 +21,11 @@ nav .navbar-brand .green
 {
     color: #2e944b;
 }
+
+/* Add breathing room between user records. */
+.users-table th,
+.users-table td
+{
+    padding: 1rem 1.25rem;
+}
+

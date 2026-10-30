@@ -1,0 +1,57 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Dashboard Receptionist
+{% endblock %}
+
+{% block main %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <h2 class="mb-0 h3 text-uppercase">general appointment calendar</h2>
+    <div class="gap-2 flex-column flex-sm-row justify-content-md-end d-flex align-items-center">
+        <a href="/patients/new" class="btn btn-outline-primary me-2">New Patient</a>
+        <a href="/appointments/new" class="btn btn-primary ">Schedule Appointment</a>
+    </div>
+</div>    
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 users-table">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date</th>
+                        <th>Hour</th>
+                        <th>Patient</th>
+                        <th>Doctor</th>
+                        <th>Specialty</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for appointment in appointments %}
+                    <tr>
+                        <td>{{ appointment.scheduled_date }}</td>
+                        <td>{{ appointment.scheduled_time }}</td>
+                        <td>{{ appointment.patient_name }}</td>
+                        <td>{{ appointment.doctor_name }}</td>
+                        <td>{{ appointment.specialty }}</td>
+                        <td>
+                            {%if appointment.status == 'scheduled' %}
+                                <span class="badge bg-primary text-uppercase">scheduled</span>
+                            {% elif appointment.status == 'completed' %}
+                                <span class="badge bg-success text-uppercase">Completed</span>
+                            {% else %}
+                                <span class="badge bg-danger text-uppercase">Canceled</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">No appointments found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
